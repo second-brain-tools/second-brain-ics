@@ -1,0 +1,35 @@
+component:mcp:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/second_brain_ics/*.py
+          - src/second_brain_ics/tools/**
+        all-globs-to-all-files:
+          - "!src/second_brain_ics/fetch.py"
+          - "!src/second_brain_ics/feed.py"
+          - "!src/second_brain_ics/store.py"
+
+component:feeds:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/second_brain_ics/fetch.py
+          - src/second_brain_ics/feed.py
+          - src/second_brain_ics/store.py
+          - tests/feeds/**
+
+component:docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - "*.md"
+        all-globs-to-all-files:
+          - "!CONTRIBUTING.md"
+
+component:ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/**
+          - .github/project.yml
+          - .github/labeler.yml
+          - pyproject.toml
