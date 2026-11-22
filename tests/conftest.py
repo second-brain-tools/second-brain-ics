@@ -42,6 +42,22 @@ def httpserver_listen_address() -> tuple[str, int]:
 
 
 @pytest.fixture(scope="session")
+def make_httpserver(httpserver_ssl_context: ssl.SSLContext) -> Iterator[HTTPServer]:
+    """pytest-httpserver's server, but threaded.
+
+    A client that gives up mid-request (the timeout tests) can leave its connection
+    open; a server that serves one connection at a time then blocks the next test's
+    handshake until it too times out.
+    """
+    server = HTTPServer(host="127.0.0.1", port=0, ssl_context=httpserver_ssl_context, threaded=True)
+    server.start()
+    yield server
+    server.clear()
+    if server.is_running():
+        server.stop()
+
+
+@pytest.fixture(scope="session")
 def trusted(ca: trustme.CA) -> ssl.SSLContext:
     """A client context that trusts the test certificate authority."""
     context = ssl.create_default_context()

@@ -121,7 +121,12 @@ class Fetcher:
             follow_redirects=False,
             # No proxy, no SSL_CERT_FILE, nothing else from the environment.
             trust_env=False,
-            headers={"User-Agent": USER_AGENT, "Accept": "text/calendar, */*;q=0.1"},
+            # A client is made per fetch, so a connection is never reused: say so.
+            headers={
+                "User-Agent": USER_AGENT,
+                "Accept": "text/calendar, */*;q=0.1",
+                "Connection": "close",
+            },
             timeout=httpx2.Timeout(self.timeout),
         ) as client:
             for hop in range(MAX_REDIRECTS + 1):
