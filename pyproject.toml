@@ -1,0 +1,93 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "second-brain-ics"
+dynamic = ["version"]
+description = "Read-only MCP server that lets Claude read calendar feeds (iCalendar share links), with repeats, time zones and all-day events handled for it"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+keywords = ["mcp", "mcp-server", "icalendar", "ics", "calendar", "claude", "second-brain", "proton-calendar"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Office/Business :: Scheduling",
+]
+dependencies = [
+    "fastmcp>=4.1,<5",
+    # 0.x: a new minor version may change its interfaces.
+    "second-brain-core>=0.2,<0.3",
+    # fetch.py's HTTP client; second-brain-core brings it too, but a package names
+    # what it imports.
+    "httpx2>=2.5",
+    "icalendar>=7.3,<8",
+    "recurring-ical-events>=3.8,<4",
+    "x-wr-timezone>=2,<3",
+    "pydantic>=2",
+    # icalendar brings it as well: the IANA zones, which Windows has no copy of.
+    "tzdata",
+]
+
+[project.scripts]
+second-brain-ics = "second_brain_ics.cli:main"
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "pre-commit",
+    "mypy>=1.11",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    # A real HTTPS server for the fetch tests, and the certificate authority it uses.
+    "pytest-httpserver>=1.2",
+    "trustme>=1.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/second-brain-tools/second-brain-ics"
+Repository = "https://github.com/second-brain-tools/second-brain-ics"
+Changelog = "https://github.com/second-brain-tools/second-brain-ics/blob/main/CHANGELOG.md"
+Issues = "https://github.com/second-brain-tools/second-brain-joplin/issues"
+
+[tool.hatch.version]
+path = "src/second_brain_ics/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/second_brain_ics"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+# The 90% coverage gate is enforced in CI via `--cov-fail-under=90` (see
+# .github/workflows/checks.yml), not in addopts, so running a subset of tests
+# locally does not spuriously fail it.
+addopts = "--cov=second_brain_ics --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+source = ["second_brain_ics"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src", "tests", "scripts"]
+strict = true
+ignore_missing_imports = true

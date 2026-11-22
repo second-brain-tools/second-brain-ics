@@ -1,0 +1,42 @@
+# Declarative PM spec for second-brain-ics. Issues are tracked on the organisation's
+# public tracker, second-brain-tools/second-brain-joplin; these labels are for pull requests.
+# Applied manually via `gh` CLI or GitHub UI; no automated sync script at this stage.
+
+labels:
+  # component labels
+  - name: "component:mcp"
+    color: "0075ca"
+    description: "MCP server and tool definitions"
+  - name: "component:feeds"
+    color: "0075ca"
+    description: "Fetching, parsing and expanding calendar feeds"
+  - name: "component:docs"
+    color: "0075ca"
+    description: "Documentation"
+  - name: "component:ci"
+    color: "0075ca"
+    description: "CI/CD and build"
+
+  # meta labels
+  - name: "epic"
+    color: "6f42c1"
+    description: "Multi-issue initiative"
+  - name: "backlog"
+    color: "d4c5f9"
+    description: "Unscheduled work"
+  - name: "needs-triage"
+    color: "e11d48"
+    description: "Not yet triaged"
+  - name: "blocked"
+    color: "b60205"
+    description: "Blocked by another issue or external dependency"
+  - name: "good first issue"
+    color: "7057ff"
+    description: "Good for newcomers"
+  - name: "help wanted"
+    color: "008672"
+    description: "Extra attention is needed"
+
+milestones:
+  - title: "v0.1 — First cut"
+    description: "A read-only server over named calendar feeds: list, events, search, read"
