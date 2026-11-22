@@ -15,6 +15,8 @@ from fastmcp.utilities.tests import ASGIServer, asgi_server
 from pytest_httpserver import HTTPServer
 from second_brain_core.remote import HttpOptions, http_app_kwargs, http_options
 
+from second_brain_ics.config import Feed
+from second_brain_ics.fetch import Fetched, Fetcher
 from second_brain_ics.identity import SERVER
 from second_brain_ics.server import create_server
 
@@ -63,13 +65,23 @@ async def test_round_trip_over_http_with_no_session(server: FastMCP) -> None:
                 assert result.is_error is False
 
 
-async def test_healthz_up_and_cached(server: FastMCP, httpserver: HTTPServer) -> None:
+async def test_healthz_up_and_cached(server: FastMCP, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Counted on the server's own fetcher: the test HTTPS server is shared by the whole
+    # session, and a slow request another test gave up on can still land in its log.
+    fetches: list[str] = []
+    real = Fetcher.fetch
+
+    async def counted(self: Fetcher, feed: Feed) -> Fetched:
+        fetches.append(feed.name)
+        return await real(self, feed)
+
+    monkeypatch.setattr(Fetcher, "fetch", counted)
     async with serving(server, opts(no_auth=True)) as running, raw_client(running) as http:
         for _ in range(5):
             response = await http.get("/healthz")
             assert response.status_code == 200
             assert response.json() == {"server": True, "calendar": True}
-    assert len(httpserver.log) == 1
+    assert fetches == ["main"]
 
 
 async def test_healthz_down_when_a_feed_cant_be_read(

@@ -8,7 +8,7 @@ from collections.abc import Iterator
 
 import pytest
 from build import simple
-from conftest import FEED_PATH, ServeFeed, feed_url, settings_with
+from conftest import FEED_PATH, MARKER, ServeFeed, feed_url, settings_with
 from pytest_httpserver import HTTPServer
 from werkzeug import Request, Response
 
@@ -236,22 +236,28 @@ class Clock:
         return self.now
 
 
+def requests_to(httpserver: HTTPServer, path: str) -> int:
+    """Requests this test made: the server is shared, and another test's late one may land."""
+    return sum(1 for request, _ in httpserver.log if request.path == path)
+
+
 async def test_the_minimum_interval_holds_between_fetches(
     monkeypatch: pytest.MonkeyPatch, httpserver: HTTPServer, trusted: ssl.SSLContext
 ) -> None:
-    httpserver.expect_request(FEED_PATH).respond_with_data(BODY)
-    settings = settings_with(monkeypatch, {"main": feed_url(httpserver)})
+    path = f"/interval/{MARKER}.ics"
+    httpserver.expect_request(path).respond_with_data(BODY)
+    settings = settings_with(monkeypatch, {"main": feed_url(httpserver, path)})
     clock = Clock()
     store = Store(settings, Fetcher(settings, verify=trusted), clock=clock)
     for _ in range(3):
         await store.view("main")
-    assert len(httpserver.log) == 1
+    assert requests_to(httpserver, path) == 1
     clock.now += 59
     await store.view("main")
-    assert len(httpserver.log) == 1
+    assert requests_to(httpserver, path) == 1
     clock.now += 1
     await store.view("main")
-    assert len(httpserver.log) == 2
+    assert requests_to(httpserver, path) == 2
 
 
 async def test_calls_that_arrive_together_share_one_fetch(
@@ -261,11 +267,12 @@ async def test_calls_that_arrive_together_share_one_fetch(
         time.sleep(0.3)
         return Response(BODY)
 
-    httpserver.expect_request(FEED_PATH).respond_with_handler(slowish)
-    settings = settings_with(monkeypatch, {"main": feed_url(httpserver)})
+    path = f"/together/{MARKER}.ics"
+    httpserver.expect_request(path).respond_with_handler(slowish)
+    settings = settings_with(monkeypatch, {"main": feed_url(httpserver, path)})
     store = Store(settings, Fetcher(settings, verify=trusted))
     views = await asyncio.gather(*(store.view("main") for _ in range(10)))
-    assert len(httpserver.log) == 1
+    assert requests_to(httpserver, path) == 1
     assert all(view.copy is views[0].copy and view.copy is not None for view in views)
 
 
